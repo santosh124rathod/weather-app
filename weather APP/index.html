@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App :- check your location's Tempratute</title>
+  <link rel="stylesheet" href="weather.css  " />
+</head>
+<body>
+  <div class="weather-container">
+    <h1>Weather App</h1>
+    <input type="text" id="locationInput" placeholder="Enter location..." />
+    <button onclick="getWeather()">Get Weather</button>
+    <button onclick="startVoiceInput()" style="margin-left:10px; background:#6a1b9a">🎤 Voice</button>
+    <div class="weather-result" id="weatherResult"></div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const location = document.getElementById('locationInput').value;
+      const apiKey = '574384fa15454874a7070452251504';
+      const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(location)}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Location not found');
+        const data = await response.json();
+
+        const resultHTML = `
+          <h2>${data.location.name}, ${data.location.country}</h2>
+          <p><strong>${data.current.temp_c}&deg;C</strong> - ${data.current.condition.text}</p>
+          <img src="${data.current.condition.icon}" alt="Weather icon" />
+        `;
+
+        document.getElementById('weatherResult').innerHTML = resultHTML;
+
+        // Change background based on temperature
+        const temp = data.current.temp_c;
+        if (temp < 10) {
+          document.body.style.background = 'linear-gradient(to right, #a1c4fd, #c2e9fb)';
+        } else if (temp >= 10 && temp < 25) {
+          document.body.style.background = 'linear-gradient(to right, #83a4d4, #b6fbff)';
+        } else {
+          document.body.style.background = 'linear-gradient(to right, #fbc2eb, #a6c1ee)';
+        }
+
+      } catch (error) {
+        document.getElementById('weatherResult').innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+        document.body.style.background = 'linear-gradient(to right, #ff9a9e, #fad0c4)';
+      }
+    }
+
+    
+    document.getElementById('locationInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        getWeather();
+      }
+    });
+
+    //voice input
+    function startVoiceInput() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert('Your browser does not support speech recognition.');
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const spokenLocation = event.results[0][0].transcript;
+        document.getElementById('locationInput').value = spokenLocation;
+        getWeather();
+      };
+
+      recognition.onerror = function(event) {
+        alert('Voice input error: ' + event.error);
+      };
+    }
+  </script>
+</body>
+</html>
